@@ -1,7 +1,7 @@
-import { LAUNCH_PUPPETEER_OPTS, PAGE_PUPPETEER_OPTS } from "../options"
+import { LAUNCH_PUPPETEER_OPTS, PAGE_PUPPETEER_OPTS } from "../options.js"
 import puppeteer from "puppeteer"
 
-export default async function getContent (url){
+export const getContent = async (url) =>{
     try{
         const browser = await puppeteer.launch(LAUNCH_PUPPETEER_OPTS)
         const page = await browser.newPage()
