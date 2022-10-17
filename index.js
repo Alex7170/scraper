@@ -1,10 +1,8 @@
 import cheerio from "cheerio"
-import {getContent} from "./helpers/getContent.js"
 import { LAUNCH_PUPPETEER_OPTS, PAGE_PUPPETEER_OPTS } from "./options.js"
 import puppeteer from "puppeteer"
 import {parser} from "./helpers/parser.js"
-import fs from "fs"
-
+import {excel} from "./helpers/convert.js"
 
 
 export const main = async (isTest) =>{
@@ -31,28 +29,23 @@ export const main = async (isTest) =>{
             const pageNumber = $('.box-pager__item:contains("/")').text().split(' /')
             if (isTest && pageNumber[0] == '2') break 
             if (pageNumber[0] == pageNumber[1]) break
-            page.click(".box-pager__btn--next", {clickCount: 1})
+            await page.click(".box-pager__btn--next")
             await new Promise((resolve, reject) => {
                 setTimeout(() => resolve(), 300) // change this digit to 500 or 1000 if it'l have some problems with getting data from site
             })
         }
         for (const item of data){
             const link = `${site}${item.url}`
-            const content = await getContent(link)
+            await page.goto(link)
+            const content = await page.content()
             const $ = cheerio.load(content)
             delete item.url
             item.doctors = parser($(".box-detail__item").find('p:contains("Zubní lékaři:")').next().text())
         }
-        const writeStream = fs.createWriteStream("file.xls") // here you can change a path where .xls file will be saved
-        const header = "POBOČKA"+"\t"+"ADRESA"+"\t"+ "TELEFON" + "\t" + "E-MAIL" + "\t" + "DOCTOŘI" + "\n"
-        writeStream.write(header)
-        for (const item of data){
-            const row = item.title + "\t" + item.adres + "\t" + item.tel + "\t" + item.email + "\t" + item.doctors + "\n"
-            writeStream.write(row)
-        }
-        writeStream.close()
+        browser.close()
+        excel(data)
         if (isTest) console.log(data)
-        console.log("file.xls is created")
+        console.log("file.xlsx is created")
     } catch(e){
         console.log("ERROR HAS OCURED!!! :" , e)
     }
